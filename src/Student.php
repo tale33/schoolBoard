@@ -4,35 +4,68 @@ require_once ('db/ConnectDB.php');
 
 class Student {
 
-    private int $ID;
+    private string $ID;
     private PDO $pdo;
 
-    public function __construct(int $studentID) {
+    public function __construct(string $studentID) {
         $this->ID = $studentID;
         $connectDB = new ConnectDB();
         $this->pdo = $connectDB->getConnection();
     }
 
-    public function getResults() : string
+    public function getResult() : array
     {
-        $studentRow = $this->getStudent();
-
-        return $studentRow['schoolBoard'] === 'CSM' ? $this->getCSMResults($studentRow) : $this->getCSMBResults($studentRow);
+        $studentRows = $this->getStudents();
+        $result = [];
+        foreach ($studentRows as $studentRow) {
+            if($studentRow['id'] === $this->ID) {
+                if($studentRow['boardName'] === 'CSM') {
+                    $result = $this->getCSMResults($studentRow);
+                } else {
+                    $result = $this->getCSMBResults($studentRow);
+                }
+            } else {
+                continue;
+            }
+        }
+        return $result;
     }
 
-    private function getStudent() : array
+    private function getStudents() : array
     {
         $query = <<<SQL
-SELECT * FROM students WHERE ID=:ID
+SELECT * FROM students S 
+INNER JOIN schoolBoards SB 
+ON S.schoolBoardID=SB.board_id
 SQL;
         $preparedStatement = $this->pdo->prepare($query);
-        $preparedStatement->execute(array(':ID' => $this->ID));
+        $preparedStatement->execute();
         return $preparedStatement->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    private function getCSMResults(array $row) : string
+    private function getCSMResults(array $row) : array
     {
-        return '';
+        $gradesTotal = 0;
+        $gradeCount = 0;
+        foreach ([1, 2, 3, 4] as $gradeNum) {
+            if($row['grade' . $gradeNum]) {
+                $gradesTotal += $row['grade' . $gradeNum];
+                $gradeCount++;
+            } else {
+                $gradesTotal += 0;
+            }
+        }
+        if($gradesTotal > 0 && $gradeCount > 0) {
+            $pass = !!(($gradesTotal / $gradeCount) >= 7);
+        } else {
+            $pass = false;
+        }
+
+        return [
+            'Name' => $row['name'],
+            'School board' => '',
+            'Passed' => $pass
+        ];
     }
 
     private function getCSMBResults(array $row) : string

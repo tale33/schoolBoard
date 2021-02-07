@@ -1,10 +1,10 @@
 DROP TABLE IF EXISTS schoolBoards;
 CREATE TABLE schoolBoards (
-    id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(30) NOT NULL
+    board_id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    boardName VARCHAR(30) NOT NULL
 );
-INSERT INTO schoolBoards name VALUES CSM;
-INSERT INTO schoolBoards name VALUES CSMB;
+INSERT INTO schoolBoards (boardName) VALUES ("CSM");
+INSERT INTO schoolBoards (boardName) VALUES ("CSMB");
 
 DROP TABLE IF EXISTS students;
 CREATE TABLE students (

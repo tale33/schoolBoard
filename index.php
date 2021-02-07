@@ -6,12 +6,14 @@ if($_GET) {
     $keys = array_keys($_GET);
     switch ($keys[0]) {
         case 'student':
-            $studentID = intval($_GET['student'], 10);
+            $studentID = $_GET['student'];
             if($studentID) {
                 $student = new Student($studentID);
-                echo json_encode($student->getResults());
+                $result = $student->getResult();
+                $message = $result ? $result : 'We do not have records of that student.';
+                echo json_encode($message);
             } else {
-                echo json_encode([ 'error' => "Please provide valid ID." ]);
+                echo json_encode('Please provide valid student ID.');
             }
             break;
         default:
