@@ -11,7 +11,7 @@ if($_GET) {
                 $student = new Student($studentID);
                 $result = $student->getResult();
                 $message = $result ? $result : 'We do not have records of that student.';
-                echo json_encode($message);
+                echo $message;
             } else {
                 echo json_encode('Please provide valid student ID.');
             }

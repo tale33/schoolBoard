@@ -13,7 +13,7 @@ class Student {
         $this->pdo = $connectDB->getConnection();
     }
 
-    public function getResult() : array
+    public function getResult() : string
     {
         $studentRows = $this->getStudents();
         $result = [];
@@ -43,33 +43,85 @@ SQL;
         return $preparedStatement->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    private function getCSMResults(array $row) : array
+    private function getCSMResults(array $row) : string
     {
-        $gradesTotal = 0;
-        $gradeCount = 0;
-        foreach ([1, 2, 3, 4] as $gradeNum) {
-            if($row['grade' . $gradeNum]) {
-                $gradesTotal += $row['grade' . $gradeNum];
-                $gradeCount++;
-            } else {
-                $gradesTotal += 0;
-            }
-        }
+        $gradeValues = $this->getGradeValues($row);
+        $gradesTotal = $gradeValues['gradesTotal'];
+        $gradeCount = $gradeValues['gradeCount'];
+
         if($gradesTotal > 0 && $gradeCount > 0) {
-            $pass = !!(($gradesTotal / $gradeCount) >= 7);
+            $average = $gradesTotal / $gradeCount;
+            $pass = !!($average >= 7);
         } else {
+            $average = 0;
             $pass = false;
         }
 
-        return [
+        return json_encode([
+            'ID' => $row['id'],
             'Name' => $row['name'],
-            'School board' => '',
+            'Grades' => $gradeValues['allGrades'],
+            'Average' => $average,
             'Passed' => $pass
-        ];
+        ]);
     }
 
     private function getCSMBResults(array $row) : string
     {
-        return '';
+        $gradeValues = $this->getGradeValues($row);
+        if($gradeValues['gradeCount'] > 2) {
+            rsort($gradeValues['allGrades']);
+            $grades = $gradeValues['allGrades'];
+            array_pop($grades);
+        }
+
+        $average = 0;
+        if($gradeValues['gradesTotal'] > 0 && $gradeValues['gradeCount'] > 0) {
+            $average = $gradeValues['gradesTotal'] / $gradeValues['gradeCount'];
+        }
+
+        $pass = $gradeValues['allGrades'][0] > 8;
+
+        $results = [
+            'ID' => $row['id'],
+            'Name' => $row['name'],
+            'Average' => $average,
+            'Passed' => $pass
+        ];
+        $gradesXML = '';
+        foreach ($gradeValues['allGrades'] as $grade) {
+            $gradesXML .= "<Grade>$grade</Grade>";
+        }
+
+        return <<<XML
+<?xml version='1.0' standalone='yes'?>
+<student>
+ <ID>{$results['ID']}</ID>
+ <Name>{$results['Name']}</Name>
+ <Grades>$gradesXML</Grades>
+ <Average>{$results['Average']}</Average>
+ <Passed>{$results['Passed']}</Passed>
+</student>
+XML;
+    }
+
+    private function getGradeValues(array $row) : array
+    {
+        $gradesTotal = 0;
+        $gradeCount = 0;
+
+        foreach ([1, 2, 3, 4] as $gradeNum) {
+            $grades[] = $row['grade' . $gradeNum];
+            if($row['grade' . $gradeNum]) {
+                $gradesTotal += $row['grade' . $gradeNum];
+                $gradeCount++;
+            }
+        }
+
+        return [
+            'gradesTotal' => $gradesTotal,
+            'gradeCount' => $gradeCount,
+            'allGrades' => $grades
+        ];
     }
 }
