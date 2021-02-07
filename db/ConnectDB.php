@@ -3,8 +3,8 @@
 class ConnectDB {
 
     private string $dsn = 'mysql:dbname=schoolBoard;host=127.0.0.1';
-    private string $user = 'tale';
-    private string $password = 'Tr3pavica<33';
+    private string $user = '';
+    private string $password = '';
     private PDO $connection;
     private string $errorMessage = '';
 
